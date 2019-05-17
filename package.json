@@ -43,7 +43,6 @@
   "dependencies": {
     "async": "2.1.4",
     "browserify": "13.1.1",
-    "closure-util": "1.15.1",
     "derequire": "2.0.3",
     "fs-extra": "1.0.0",
     "glob": "7.1.1",
@@ -154,7 +153,6 @@
   "scripts": {
     "debug-server": "node tasks/serve-lib.js",
     "install": "node tasks/install.js",
-    "postinstall": "closure-util update",
     "pretest": "eslint tasks test test_rendering src examples",
     "start": "node tasks/serve.js",
     "test": "node tasks/test.js"
