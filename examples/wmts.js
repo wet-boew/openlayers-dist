@@ -1,35 +1,60 @@
-var map;
+goog.require('ol.Map');
+goog.require('ol.View');
+goog.require('ol.control');
+goog.require('ol.extent');
+goog.require('ol.layer.Tile');
+goog.require('ol.proj');
+goog.require('ol.source.OSM');
+goog.require('ol.source.WMTS');
+goog.require('ol.tilegrid.WMTS');
 
-function init() {
-    
-    map = new OpenLayers.Map({
-        div: "map",
-        projection: "EPSG:900913"
-    });    
-    
-    var osm = new OpenLayers.Layer.OSM();
 
-    // If tile matrix identifiers differ from zoom levels (0, 1, 2, ...)
-    // then they must be explicitly provided.
-    var matrixIds = new Array(26);
-    for (var i=0; i<26; ++i) {
-        matrixIds[i] = "EPSG:900913:" + i;
-    }
-
-    var wmts = new OpenLayers.Layer.WMTS({
-        name: "Medford Buildings",
-        url: "http://v2.suite.opengeo.org/geoserver/gwc/service/wmts/",
-        layer: "medford:buildings",
-        matrixSet: "EPSG:900913",
-        matrixIds: matrixIds,
-        format: "image/png",
-        style: "_null",
-        opacity: 0.7,
-        isBaseLayer: false
-    });                
-
-    map.addLayers([osm, wmts]);
-    map.addControl(new OpenLayers.Control.LayerSwitcher());
-    map.setCenter(new OpenLayers.LonLat(-13677832, 5213272), 13);
-    
+var projection = ol.proj.get('EPSG:3857');
+var projectionExtent = projection.getExtent();
+var size = ol.extent.getWidth(projectionExtent) / 256;
+var resolutions = new Array(14);
+var matrixIds = new Array(14);
+for (var z = 0; z < 14; ++z) {
+  // generate resolutions and matrixIds arrays for this WMTS
+  resolutions[z] = size / Math.pow(2, z);
+  matrixIds[z] = z;
 }
+
+var map = new ol.Map({
+  layers: [
+    new ol.layer.Tile({
+      source: new ol.source.OSM(),
+      opacity: 0.7
+    }),
+    new ol.layer.Tile({
+      opacity: 0.7,
+      source: new ol.source.WMTS({
+        attributions: 'Tiles © <a href="https://services.arcgisonline.com/arcgis/rest/' +
+            'services/Demographics/USA_Population_Density/MapServer/">ArcGIS</a>',
+        url: 'https://services.arcgisonline.com/arcgis/rest/' +
+            'services/Demographics/USA_Population_Density/MapServer/WMTS/',
+        layer: '0',
+        matrixSet: 'EPSG:3857',
+        format: 'image/png',
+        projection: projection,
+        tileGrid: new ol.tilegrid.WMTS({
+          origin: ol.extent.getTopLeft(projectionExtent),
+          resolutions: resolutions,
+          matrixIds: matrixIds
+        }),
+        style: 'default',
+        wrapX: true
+      })
+    })
+  ],
+  target: 'map',
+  controls: ol.control.defaults({
+    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+      collapsible: false
+    })
+  }),
+  view: new ol.View({
+    center: [-11158582, 4813697],
+    zoom: 4
+  })
+});
